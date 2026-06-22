@@ -1,109 +1,69 @@
-// ============================================================
-// DATOS — Array local de Pokémon (base del proyecto)
-// ============================================================
-const pokemonLocal = [
-  { nombre: "bulbasaur",  imagen: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png",  tipos: ["grass", "poison"] },
-  { nombre: "charmander", imagen: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png",  tipos: ["fire"] },
-  { nombre: "squirtle",   imagen: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/7.png",  tipos: ["water"] },
-  { nombre: "pikachu",    imagen: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png", tipos: ["electric"] },
-  { nombre: "jigglypuff", imagen: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/39.png", tipos: ["normal", "fairy"] },
-  { nombre: "gengar",     imagen: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png", tipos: ["ghost", "poison"] }
-];
+// =============================================
+// POKÉDEX — Lab 10: fetch, Promesas y JSON
+// =============================================
 
-// ============================================================
-// LOGRO 1 — Colores por tipo
-// ============================================================
-const colorPorTipo = {
-  grass:    "bg-green-200 text-green-800",
-  poison:   "bg-purple-200 text-purple-800",
-  fire:     "bg-red-200 text-red-800",
-  water:    "bg-blue-200 text-blue-800",
-  electric: "bg-yellow-200 text-yellow-800",
-  normal:   "bg-slate-200 text-slate-700",
-  fairy:    "bg-pink-200 text-pink-800",
-  ghost:    "bg-indigo-200 text-indigo-800",
-  // valor por defecto para tipos no listados
-  default:  "bg-slate-200 text-slate-700"
-};
-
-// ============================================================
-// Se creo una Tarjeta (con destructuring, map)
-// + LOGRO 1 (colores por tipo)
-// + LOGRO 3 (destructuring de array para tipo principal)
-// ============================================================
-function crearTarjeta(pokemon) {
-  // HU3 — Destructuring de objeto
-  const { nombre, imagen, tipos } = pokemon;
-
-  // HU3 — Acceso seguro: imagen de respaldo si falta
-  const img = imagen ?? "https://via.placeholder.com/96?text=?";
-
-  // HU3 — Cantidad segura de tipos (por si 'tipos' no existiera)
-  const cantidadTipos = tipos?.length ?? 0;
-
-  // LOGRO 3 — Destructuring de array: tipo principal
-  const [principal] = tipos ?? ["???"];
-
-  // HU3 + LOGRO 1 — Badges con color según tipo
-  const badges = tipos
-    .map(function (tipo) {
-      const claseColor = colorPorTipo[tipo] ?? colorPorTipo.default;
-      return `<span class="text-xs ${claseColor} px-2 py-1 rounded-full">${tipo}</span>`;
-    })
-    .join("");
-
-  // HU2 — Patrón render: crear nodo y asignar innerHTML
-  const articulo = document.createElement("article");
-  articulo.className = "bg-white rounded-xl shadow p-4 text-center";
-  articulo.innerHTML = `
-    <img src="${img}" alt="${nombre}" class="w-24 h-24 mx-auto">
-    <h2 class="capitalize font-bold text-slate-800 mt-2">${nombre}</h2>
-    <p class="text-xs text-slate-400 mt-1">Tipo principal: <span class="font-semibold capitalize">${principal}</span></p>
-    <div class="flex gap-1 justify-center mt-2 flex-wrap">${badges}</div>
-  `;
-
-  return articulo;
-}
-
-// ============================================================
-// HU2 — Función render: limpia → recorre → inserta
-// ============================================================
 const contenedor = document.getElementById("resultado");
-
-function render(lista) {
-  contenedor.innerHTML = "";                   // 1. limpia lo anterior
-  lista.forEach(function (pokemon) {
-    const tarjeta = crearTarjeta(pokemon);     // 2. crea el nodo
-    contenedor.appendChild(tarjeta);           // 3. lo inserta en el DOM
-  });
-}
-
-// ============================================================
-// LOGRO 2 — Spread e inmutabilidad: agregar un Pokémon nuevo
-// sin mutar el array original
-// ============================================================
-const pokemonNuevo = {
-  nombre: "eevee",
-  imagen: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/133.png",
-  tipos: ["normal"]
-};
-
-const pokemonAmpliada = [...pokemonLocal, pokemonNuevo]; // spread
-
-// ============================================================
-// Filtrado en vivo con el buscador
-// ============================================================
 const buscador = document.getElementById("buscador");
 
-buscador.addEventListener("input", function () {
-  const texto = buscador.value.toLowerCase();
-  const filtrados = pokemonAmpliada.filter(function (p) {
-    return p.nombre.includes(texto);
-  });
-  render(filtrados);
+let pokedex = []; // rejilla cargada desde la API
+
+// ── Adaptador: traduce la estructura de la API a la tuya ──
+function adaptarPokemon(data) {
+  return {
+    nombre: data.name,
+    imagen: data.sprites?.front_default ?? "https://via.placeholder.com/96?text=?",
+    tipos: data.types.map(t => t.type.name)
+  };
+}
+
+// ── crearTarjeta ──
+function crearTarjeta(pokemon) {
+  const div = document.createElement("div");
+  div.className = "bg-white rounded-2xl shadow p-4 flex flex-col items-center gap-2";
+  div.innerHTML = `
+    <img src="${pokemon.imagen}" alt="${pokemon.nombre}" class="w-24 h-24">
+    <h2 class="capitalize font-bold text-lg">${pokemon.nombre}</h2>
+    <div class="flex gap-1">
+      ${pokemon.tipos.map(t => `<span class="bg-slate-200 rounded-full px-2 py-0.5 text-xs capitalize">${t}</span>`).join("")}
+    </div>
+  `;
+  return div;
+}
+
+// ── render: igual que en C09 ──
+function render(lista) {
+  contenedor.innerHTML = "";
+  lista.forEach(p => contenedor.appendChild(crearTarjeta(p)));
+}
+
+// ── HU1 (experimento asincronía — solo para ver en consola) ──
+console.log("1. pido los datos…");
+// El fetch de HU1 está comentado aquí porque HU4 ya hace el fetch real
+// fetch("https://pokeapi.co/api/v2/pokemon/pikachu").then(() => console.log("3. llegaron"));
+console.log("2. sigo trabajando sin esperar");
+
+// ── Cargar varios Pokémon en paralelo ──
+const nombres = ["bulbasaur", "charmander", "squirtle", "pikachu", "jigglypuff", "gengar"];
+
+contenedor.innerHTML = `<p class="col-span-full text-center text-slate-500">Cargando…</p>`;
+
+const promesas = nombres.map(function (nombre) {
+  return fetch(`https://pokeapi.co/api/v2/pokemon/${nombre}`).then(r => r.json());
 });
 
-// ============================================================
-// Render inicial — muestra todos (incluyendo eevee del Logro 2)
-// ============================================================
-render(pokemonAmpliada);
+Promise.all(promesas)
+  .then(function (datos) {
+    pokedex = datos.map(adaptarPokemon);
+    render(pokedex);
+  })
+  .catch(function () {
+    contenedor.innerHTML = `<p class="col-span-full text-center text-red-600">No se pudo cargar la Pokédex.</p>`;
+  });
+
+// ── Buscador (igual, solo cambia pokemonLocal → pokedex) ──
+buscador.addEventListener("input", function () {
+  const texto = buscador.value.toLowerCase();
+  const filtrados = pokedex.filter(p => p.nombre.includes(texto));
+  render(filtrados);
+});
+////////////////////////////////////////////////
