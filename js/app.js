@@ -27,7 +27,7 @@ const colorPorTipo = {
 };
 
 // ============================================================
-// HU2 + HU3 — crearTarjeta (con destructuring, map, ??, ?.)
+// Se creo una Tarjeta (con destructuring, map)
 // + LOGRO 1 (colores por tipo)
 // + LOGRO 3 (destructuring de array para tipo principal)
 // ============================================================
@@ -91,7 +91,7 @@ const pokemonNuevo = {
 const pokemonAmpliada = [...pokemonLocal, pokemonNuevo]; // spread
 
 // ============================================================
-// HU4 — Filtrado en vivo con el buscador
+// Filtrado en vivo con el buscador
 // ============================================================
 const buscador = document.getElementById("buscador");
 
