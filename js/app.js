@@ -66,4 +66,4 @@ buscador.addEventListener("input", function () {
   const filtrados = pokedex.filter(p => p.nombre.includes(texto));
   render(filtrados);
 });
-////////////////////////////////////////////////
+
