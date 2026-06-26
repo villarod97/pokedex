@@ -1,54 +1,138 @@
-// =============================================
-// POKÉDEX — Lab 10: fetch, Promesas y JSON
-// =============================================
+/// ============================================================
+// COLORES POR TIPO (C09 — sin cambios)
+// ============================================================
+const colorPorTipo = {
+  grass:    "bg-green-200 text-green-800",
+  poison:   "bg-purple-200 text-purple-800",
+  fire:     "bg-red-200 text-red-800",
+  water:    "bg-blue-200 text-blue-800",
+  electric: "bg-yellow-200 text-yellow-800",
+  normal:   "bg-slate-200 text-slate-700",
+  fairy:    "bg-pink-200 text-pink-800",
+  ghost:    "bg-indigo-200 text-indigo-800",
+  psychic:  "bg-fuchsia-200 text-fuchsia-800",
+  dragon:   "bg-violet-200 text-violet-800",
+  dark:     "bg-zinc-300 text-zinc-800",
+  rock:     "bg-amber-200 text-amber-800",
+  ground:   "bg-orange-200 text-orange-800",
+  ice:      "bg-cyan-200 text-cyan-800",
+  bug:      "bg-lime-200 text-lime-800",
+  flying:   "bg-sky-200 text-sky-800",
+  steel:    "bg-slate-300 text-slate-700",
+  fighting: "bg-red-300 text-red-900",
+  default:  "bg-slate-200 text-slate-700"
+};
 
+// ============================================================
+// CREAR TARJETA (C09 — sin cambios)
+// ============================================================
+function crearTarjeta(pokemon) {
+  const { nombre, imagen, tipos } = pokemon;
+  const img = imagen ?? "https://via.placeholder.com/96?text=?";
+  const [principal] = tipos ?? ["???"];
+
+  const badges = tipos
+    .map(function (tipo) {
+      const claseColor = colorPorTipo[tipo] ?? colorPorTipo.default;
+      return `<span class="text-xs ${claseColor} px-2 py-1 rounded-full">${tipo}</span>`;
+    })
+    .join("");
+
+  const articulo = document.createElement("article");
+  articulo.className = "bg-white rounded-xl shadow p-4 text-center";
+  articulo.innerHTML = `
+    <img src="${img}" alt="${nombre}" class="w-24 h-24 mx-auto">
+    <h2 class="capitalize font-bold text-slate-800 mt-2">${nombre}</h2>
+    <p class="text-xs text-slate-400 mt-1">
+      Tipo principal: <span class="font-semibold capitalize">${principal}</span>
+    </p>
+    <div class="flex gap-1 justify-center mt-2 flex-wrap">${badges}</div>
+  `;
+
+  return articulo;
+}
+
+// ============================================================
+// RENDER (C09 — sin cambios)
+// ============================================================
 const contenedor = document.getElementById("resultado");
+
+function render(lista) {
+  contenedor.innerHTML = "";
+  lista.forEach(function (pokemon) {
+    const tarjeta = crearTarjeta(pokemon);
+    contenedor.appendChild(tarjeta);
+  });
+}
+
+// ============================================================
+// BUSCADOR (C09 — solo cambia pokemonLocal → pokedex)
+// ============================================================
 const buscador = document.getElementById("buscador");
 
-let pokedex = []; // rejilla cargada desde la API
+let pokedex = []; // se llenará cuando lleguen los datos de la API
 
-// ── Adaptador: traduce la estructura de la API a la tuya ──
+buscador.addEventListener("input", function () {
+  const texto = buscador.value.toLowerCase();
+  const filtrados = pokedex.filter(function (p) {
+    return p.nombre.includes(texto);
+  });
+  render(filtrados);
+});
+
+// ============================================================
+// HU3 — Función adaptadora: estructura API → forma limpia
+// ============================================================
 function adaptarPokemon(data) {
   return {
     nombre: data.name,
     imagen: data.sprites?.front_default ?? "https://via.placeholder.com/96?text=?",
-    tipos: data.types.map(t => t.type.name)
+    tipos:  data.types.map(function (t) { return t.type.name; })
   };
 }
 
-// ── crearTarjeta ──
-function crearTarjeta(pokemon) {
-  const div = document.createElement("div");
-  div.className = "bg-white rounded-2xl shadow p-4 flex flex-col items-center gap-2";
-  div.innerHTML = `
-    <img src="${pokemon.imagen}" alt="${pokemon.nombre}" class="w-24 h-24">
-    <h2 class="capitalize font-bold text-lg">${pokemon.nombre}</h2>
-    <div class="flex gap-1">
-      ${pokemon.tipos.map(t => `<span class="bg-slate-200 rounded-full px-2 py-0.5 text-xs capitalize">${t}</span>`).join("")}
+// ============================================================
+// SPINNER (Logro 1 — reemplaza el texto "Cargando…")
+// ============================================================
+function mostrarSpinner() {
+  contenedor.innerHTML = `
+    <div class="col-span-full flex flex-col items-center justify-center py-12 text-slate-400">
+      <svg class="animate-spin h-10 w-10 mb-3 text-yellow-400"
+           xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10"
+                stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor"
+              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+      </svg>
+      <span class="text-sm">Cargando Pokédex…</span>
     </div>
   `;
-  return div;
 }
 
-// ── render: igual que en C09 ──
-function render(lista) {
-  contenedor.innerHTML = "";
-  lista.forEach(p => contenedor.appendChild(crearTarjeta(p)));
-}
+// ============================================================
+// HU4 — Cargar varios Pokémon en paralelo con Promise.all
+// Lista completa: 6 de C09 + eevee (Logro 2 de C09) + 2 nuevos
+// ============================================================
+const nombres = [
+  "bulbasaur",
+  "charmander",
+  "squirtle",
+  "pikachu",
+  "jigglypuff",
+  "gengar",
+  "eevee",      // venía del Logro 2 de C09
+  "mewtwo",     // nuevo 1
+  "snorlax"     // nuevo 2
+];
 
-// ── HU1 (experimento asincronía — solo para ver en consola) ──
-console.log("1. pido los datos…");
-// El fetch de HU1 está comentado aquí porque HU4 ya hace el fetch real
-// fetch("https://pokeapi.co/api/v2/pokemon/pikachu").then(() => console.log("3. llegaron"));
-console.log("2. sigo trabajando sin esperar");
-
-// ── Cargar varios Pokémon en paralelo ──
-const nombres = ["bulbasaur", "charmander", "squirtle", "pikachu", "jigglypuff", "gengar"];
-
-contenedor.innerHTML = `<p class="col-span-full text-center text-slate-500">Cargando…</p>`;
+mostrarSpinner(); // Logro 1: spinner animado mientras carga
 
 const promesas = nombres.map(function (nombre) {
-  return fetch(`https://pokeapi.co/api/v2/pokemon/${nombre}`).then(r => r.json());
+  return fetch(`https://pokeapi.co/api/v2/pokemon/${nombre}`)
+    .then(function (response) {
+      if (!response.ok) throw new Error(`Error al cargar ${nombre}`);
+      return response.json();
+    });
 });
 
 Promise.all(promesas)
@@ -57,13 +141,9 @@ Promise.all(promesas)
     render(pokedex);
   })
   .catch(function () {
-    contenedor.innerHTML = `<p class="col-span-full text-center text-red-600">No se pudo cargar la Pokédex.</p>`;
+    contenedor.innerHTML = `
+      <p class="col-span-full text-center text-red-600 font-medium py-8">
+        ⚠️ No se pudo cargar la Pokédex. Revisa tu conexión e intenta de nuevo.
+      </p>
+    `;
   });
-
-// ── Buscador (igual, solo cambia pokemonLocal → pokedex) ──
-buscador.addEventListener("input", function () {
-  const texto = buscador.value.toLowerCase();
-  const filtrados = pokedex.filter(p => p.nombre.includes(texto));
-  render(filtrados);
-});
-
