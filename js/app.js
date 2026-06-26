@@ -1,17 +1,5 @@
-// ============================================================
-// DATOS — Array local de Pokémon (base del proyecto)
-// ============================================================
-const pokemonLocal = [
-  { nombre: "bulbasaur",  imagen: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png",  tipos: ["grass", "poison"] },
-  { nombre: "charmander", imagen: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png",  tipos: ["fire"] },
-  { nombre: "squirtle",   imagen: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/7.png",  tipos: ["water"] },
-  { nombre: "pikachu",    imagen: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png", tipos: ["electric"] },
-  { nombre: "jigglypuff", imagen: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/39.png", tipos: ["normal", "fairy"] },
-  { nombre: "gengar",     imagen: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png", tipos: ["ghost", "poison"] }
-];
-
-// ============================================================
-// LOGRO 1 — Colores por tipo
+/// ============================================================
+// COLORES POR TIPO (C09 — sin cambios)
 // ============================================================
 const colorPorTipo = {
   grass:    "bg-green-200 text-green-800",
@@ -22,29 +10,27 @@ const colorPorTipo = {
   normal:   "bg-slate-200 text-slate-700",
   fairy:    "bg-pink-200 text-pink-800",
   ghost:    "bg-indigo-200 text-indigo-800",
-  // valor por defecto para tipos no listados
+  psychic:  "bg-fuchsia-200 text-fuchsia-800",
+  dragon:   "bg-violet-200 text-violet-800",
+  dark:     "bg-zinc-300 text-zinc-800",
+  rock:     "bg-amber-200 text-amber-800",
+  ground:   "bg-orange-200 text-orange-800",
+  ice:      "bg-cyan-200 text-cyan-800",
+  bug:      "bg-lime-200 text-lime-800",
+  flying:   "bg-sky-200 text-sky-800",
+  steel:    "bg-slate-300 text-slate-700",
+  fighting: "bg-red-300 text-red-900",
   default:  "bg-slate-200 text-slate-700"
 };
 
 // ============================================================
-// Se creo una Tarjeta (con destructuring, map)
-// + LOGRO 1 (colores por tipo)
-// + LOGRO 3 (destructuring de array para tipo principal)
+// CREAR TARJETA (C09 — sin cambios)
 // ============================================================
 function crearTarjeta(pokemon) {
-  // HU3 — Destructuring de objeto
   const { nombre, imagen, tipos } = pokemon;
-
-  // HU3 — Acceso seguro: imagen de respaldo si falta
   const img = imagen ?? "https://via.placeholder.com/96?text=?";
-
-  // HU3 — Cantidad segura de tipos (por si 'tipos' no existiera)
-  const cantidadTipos = tipos?.length ?? 0;
-
-  // LOGRO 3 — Destructuring de array: tipo principal
   const [principal] = tipos ?? ["???"];
 
-  // HU3 + LOGRO 1 — Badges con color según tipo
   const badges = tipos
     .map(function (tipo) {
       const claseColor = colorPorTipo[tipo] ?? colorPorTipo.default;
@@ -52,13 +38,14 @@ function crearTarjeta(pokemon) {
     })
     .join("");
 
-  // HU2 — Patrón render: crear nodo y asignar innerHTML
   const articulo = document.createElement("article");
   articulo.className = "bg-white rounded-xl shadow p-4 text-center";
   articulo.innerHTML = `
     <img src="${img}" alt="${nombre}" class="w-24 h-24 mx-auto">
     <h2 class="capitalize font-bold text-slate-800 mt-2">${nombre}</h2>
-    <p class="text-xs text-slate-400 mt-1">Tipo principal: <span class="font-semibold capitalize">${principal}</span></p>
+    <p class="text-xs text-slate-400 mt-1">
+      Tipo principal: <span class="font-semibold capitalize">${principal}</span>
+    </p>
     <div class="flex gap-1 justify-center mt-2 flex-wrap">${badges}</div>
   `;
 
@@ -66,44 +53,98 @@ function crearTarjeta(pokemon) {
 }
 
 // ============================================================
-// HU2 — Función render: limpia → recorre → inserta
+// RENDER (C09 — sin cambios)
 // ============================================================
 const contenedor = document.getElementById("resultado");
 
 function render(lista) {
-  contenedor.innerHTML = "";                   // 1. limpia lo anterior
+  contenedor.innerHTML = "";
   lista.forEach(function (pokemon) {
-    const tarjeta = crearTarjeta(pokemon);     // 2. crea el nodo
-    contenedor.appendChild(tarjeta);           // 3. lo inserta en el DOM
+    const tarjeta = crearTarjeta(pokemon);
+    contenedor.appendChild(tarjeta);
   });
 }
 
 // ============================================================
-// LOGRO 2 — Spread e inmutabilidad: agregar un Pokémon nuevo
-// sin mutar el array original
-// ============================================================
-const pokemonNuevo = {
-  nombre: "eevee",
-  imagen: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/133.png",
-  tipos: ["normal"]
-};
-
-const pokemonAmpliada = [...pokemonLocal, pokemonNuevo]; // spread
-
-// ============================================================
-// Filtrado en vivo con el buscador
+// BUSCADOR (C09 — solo cambia pokemonLocal → pokedex)
 // ============================================================
 const buscador = document.getElementById("buscador");
 
+let pokedex = []; // se llenará cuando lleguen los datos de la API
+
 buscador.addEventListener("input", function () {
   const texto = buscador.value.toLowerCase();
-  const filtrados = pokemonAmpliada.filter(function (p) {
+  const filtrados = pokedex.filter(function (p) {
     return p.nombre.includes(texto);
   });
   render(filtrados);
 });
 
 // ============================================================
-// Render inicial — muestra todos (incluyendo eevee del Logro 2)
+// HU3 — Función adaptadora: estructura API → forma limpia
 // ============================================================
-render(pokemonAmpliada);
+function adaptarPokemon(data) {
+  return {
+    nombre: data.name,
+    imagen: data.sprites?.front_default ?? "https://via.placeholder.com/96?text=?",
+    tipos:  data.types.map(function (t) { return t.type.name; })
+  };
+}
+
+// ============================================================
+// SPINNER (Logro 1 — reemplaza el texto "Cargando…")
+// ============================================================
+function mostrarSpinner() {
+  contenedor.innerHTML = `
+    <div class="col-span-full flex flex-col items-center justify-center py-12 text-slate-400">
+      <svg class="animate-spin h-10 w-10 mb-3 text-yellow-400"
+           xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10"
+                stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor"
+              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+      </svg>
+      <span class="text-sm">Cargando Pokédex…</span>
+    </div>
+  `;
+}
+
+// ============================================================
+// HU4 — Cargar varios Pokémon en paralelo con Promise.all
+// Lista completa: 6 de C09 + eevee (Logro 2 de C09) + 2 nuevos
+// ============================================================
+const nombres = [
+  "bulbasaur",
+  "charmander",
+  "squirtle",
+  "pikachu",
+  "jigglypuff",
+  "gengar",
+  "eevee",      // venía del Logro 2 de C09
+  "mewtwo",     // nuevo 1
+  "snorlax"     // nuevo 2
+];
+
+mostrarSpinner(); // Logro 1: spinner animado mientras carga
+
+const promesas = nombres.map(function (nombre) {
+  return fetch(`https://pokeapi.co/api/v2/pokemon/${nombre}`)
+    .then(function (response) {
+      if (!response.ok) throw new Error(`Error al cargar ${nombre}`);
+      return response.json();
+    });
+});
+
+Promise.all(promesas)
+  .then(function (datos) {
+    pokedex = datos.map(adaptarPokemon);
+    render(pokedex);
+  })
+  .catch(function (error) {
+  console.error("Error al cargar la Pokédex:", error);   // útil para depurar
+  contenedor.innerHTML = `
+    <p class="col-span-full text-center text-red-600 font-medium py-8">
+      ⚠️ No se pudo cargar la Pokédex. Revisa tu conexión e intenta de nuevo.
+    </p>
+  `;
+});
