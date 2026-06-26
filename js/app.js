@@ -140,10 +140,11 @@ Promise.all(promesas)
     pokedex = datos.map(adaptarPokemon);
     render(pokedex);
   })
-  .catch(function () {
-    contenedor.innerHTML = `
-      <p class="col-span-full text-center text-red-600 font-medium py-8">
-        ⚠️ No se pudo cargar la Pokédex. Revisa tu conexión e intenta de nuevo.
-      </p>
-    `;
-  });
+  .catch(function (error) {
+  console.error("Error al cargar la Pokédex:", error);   // útil para depurar
+  contenedor.innerHTML = `
+    <p class="col-span-full text-center text-red-600 font-medium py-8">
+      ⚠️ No se pudo cargar la Pokédex. Revisa tu conexión e intenta de nuevo.
+    </p>
+  `;
+});
